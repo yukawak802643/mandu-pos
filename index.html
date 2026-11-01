@@ -42,18 +42,19 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;margin:0;overscroll-behavior:none}
 body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.5}
-button,input{font:inherit;color:inherit}
+button,input,select{font:inherit;color:inherit}
 button{touch-action:manipulation;cursor:pointer}
 button:disabled{cursor:not-allowed}
 :focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .app{position:relative;display:flex;flex-direction:column;height:100%;max-width:440px;margin:0 auto;background:var(--bg);border-left:1px solid var(--line);border-right:1px solid var(--line);user-select:none;-webkit-user-select:none}
-input,textarea{user-select:text;-webkit-user-select:text}
+input,textarea,select{user-select:text;-webkit-user-select:text}
 .top{display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;background:var(--surface);border-bottom:1px solid var(--line)}
 .brand{font-weight:900;font-size:18px;letter-spacing:.02em;flex:1}
-.chip{font-size:12px;font-weight:700;padding:2px 10px;border-radius:99px;background:var(--warn-soft);color:var(--warn)}
+.chip{font-size:12px;font-weight:700;padding:2px 10px;border-radius:99px;background:var(--accent-soft);color:var(--accent)}
+.chip.demo{background:var(--warn-soft);color:var(--warn)}
 main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
-.tabs{display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
-.tab{border:0;background:none;padding:14px 4px;font-weight:700;font-size:15px;color:var(--muted);border-top:3px solid transparent}
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+.tab{border:0;background:none;padding:14px 2px;font-weight:700;font-size:14px;color:var(--muted);border-top:3px solid transparent}
 .tab.on{color:var(--accent);border-top-color:var(--accent);background:var(--accent-soft)}
 
 /* レジ */
@@ -88,7 +89,7 @@ main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior
 .btn:disabled{opacity:.4}
 .btn.small{padding:8px 14px;font-size:14px;border-radius:10px}
 .btn.danger{color:var(--bad);border-color:var(--bad)}
-.btn.danger.armed{background:var(--bad);color:var(--surface);}
+.btn.danger.armed{background:var(--bad);color:var(--surface)}
 .btn.block{width:100%}
 .empty{padding:32px 16px;text-align:center;color:var(--muted)}
 
@@ -130,7 +131,7 @@ main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior
 .done .chg{font-size:64px;font-weight:900;color:var(--good);font-variant-numeric:tabular-nums;line-height:1.1}
 .done .pp{font-size:20px;font-weight:700;color:var(--pay);padding:10px 0}
 
-/* 一覧・集計・設定 */
+/* 一覧・集計・経費・設定 */
 .pad{padding:14px 16px;display:flex;flex-direction:column;gap:12px}
 .ord{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
 .ord.cx{background:var(--surface2)}
@@ -145,10 +146,24 @@ main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior
 .pill.cx{background:var(--bad-soft);color:var(--bad)}
 .olines{font-size:14px}
 .ofoot{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;color:var(--muted);min-height:36px}
+.plbox{border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:4px}
+.plbox.black{background:var(--good-soft);color:var(--good)}
+.plbox.red{background:var(--bad-soft);color:var(--bad)}
+.pllab{font-size:12px;font-weight:700}
+.plbig{font-size:34px;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.2;margin-bottom:4px}
+.plrow{display:flex;justify-content:space-between;font-size:14px;font-variant-numeric:tabular-nums}
+.plnote{font-size:12px;opacity:.85;margin-top:4px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.chipb{border:2px solid var(--line);background:var(--surface);border-radius:99px;padding:6px 16px;font-weight:700;font-size:14px;white-space:nowrap}
+.chipb.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .tile{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
 .tile.big{grid-column:span 2;background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .tile.big .lab{color:inherit;opacity:.85}
+.tile.pl{grid-column:span 2}
+.tile.pl.black{background:var(--good-soft);border-color:var(--good);color:var(--good)}
+.tile.pl.red{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.tile.pl .lab{color:inherit}
 .tile .val{font-size:26px;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.2}
 .tile.big .val{font-size:40px}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
@@ -158,6 +173,7 @@ main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior
 .bt i{display:block;height:100%;background:var(--accent);border-radius:7px}
 .bt i.cash{background:var(--good)}
 .bt i.paypay{background:var(--pay)}
+.bt i.exp{background:var(--warn)}
 .bv{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
 .prow{display:flex;justify-content:space-between;gap:8px;font-size:14px;padding:6px 0;border-top:1px solid var(--line)}
 .prow:first-of-type{border-top:0}
@@ -166,7 +182,7 @@ main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior
 .prod{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:12px}
 .prod:first-of-type{border-top:0;padding-top:0}
 label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);font-weight:500}
-input[type=text],input[type=number]{border:2px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 12px;font-size:17px;color:var(--ink);width:100%;font-variant-numeric:tabular-nums}
+input[type=text],input[type=number],input[type=date],select{border:2px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 12px;font-size:17px;color:var(--ink);width:100%;font-variant-numeric:tabular-nums;min-height:46px}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 label.check{flex-direction:row;align-items:center;gap:10px;font-size:15px;color:var(--ink);font-weight:700}
 label.check input{width:22px;height:22px;accent-color:var(--accent)}
@@ -179,7 +195,7 @@ label.check input{width:22px;height:22px;accent-color:var(--accent)}
 .diff.bad{background:var(--bad-soft);color:var(--bad)}
 .diff.none{background:var(--surface);color:var(--muted);font-weight:500;font-size:14px}
 textarea{width:100%;height:120px;border:2px solid var(--line);border-radius:10px;background:var(--surface);padding:8px;font-size:12px;font-family:ui-monospace,Menlo,monospace;color:var(--ink)}
-.toast{position:absolute;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 18px;border-radius:99px;font-size:14px;font-weight:700;z-index:10;pointer-events:none}
+.toast{position:absolute;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 18px;border-radius:99px;font-size:14px;font-weight:700;z-index:10;pointer-events:none;max-width:90%;text-align:center}
 @media (prefers-reduced-motion: no-preference){
   .pqty{transition:color .15s}
   .tab,.btn{transition:background .12s}
@@ -197,13 +213,21 @@ textarea{width:100%;height:120px;border:2px solid var(--line);border-radius:10px
 <script>
 (function(){
 'use strict';
+var VERSION='2.0';
+/* 1日目のデータを引き継ぐため、保存キーは変えない */
 var KEY='mandu-register-v1';
+var CATS=['材料費','容器・包装','調理器具・備品','出店料・申請費','交通費','広告・装飾','その他'];
 function $(s){return document.querySelector(s);}
-function yen(n){return '¥'+Math.round(n).toLocaleString('ja-JP');}
+function yen(n){n=Math.round(n);return (n<0?'−':'')+'¥'+Math.abs(n).toLocaleString('ja-JP');}
 function pad2(n){return String(n).padStart(2,'0');}
 function p3(n){return String(n).padStart(3,'0');}
 function timeStr(t){var d=new Date(t);return pad2(d.getHours())+':'+pad2(d.getMinutes());}
-function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function dateKey(t){var d=new Date(t);return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());}
+function todayKey(){return dateKey(Date.now());}
+function mdLabel(k){return Number(k.slice(5,7))+'/'+Number(k.slice(8,10));}
+function mdNum(k){return Number(k.slice(5,7))*100+Number(k.slice(8,10));}
+function mdTime(t){var d=new Date(t);return (d.getMonth()+1)+'/'+d.getDate()+' '+timeStr(t);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function shortName(n){return String(n).replace(/^まんどぅ\s*/,'');}
 
 /* ---------- データ ---------- */
@@ -237,50 +261,73 @@ function seed(){
   var now=Date.now(),orders=specs.map(function(s,i){
     return makeOrder(i+1,now-(specs.length-i)*9*60000,{p2:s[0],p3:s[1]},s[2],s[3],products,i===5);
   });
-  return {products:products,orders:orders,cart:{},float:3000,actual:'',demo:true,device:'レジ1'};
+  return {products:products,orders:orders,expenses:[],cart:{},float:3000,actual:'',demo:true,device:'レジ1',feeRate:1.98};
 }
 function fresh(){var s=seed();s.orders=[];s.demo=false;return s;}
 var S=load()||fresh();
-if(!S.device)S.device='レジ1';
-if(!S.cart)S.cart={};
-var ui={tab:'reg',sheet:null,done:null,armed:null,csv:false};
+function normalize(){
+  if(!S.device)S.device='レジ1';
+  if(!S.cart)S.cart={};
+  if(!Array.isArray(S.expenses))S.expenses=[];
+  if(typeof S.feeRate!=='number'||isNaN(S.feeRate))S.feeRate=1.98;
+  if(S.actual===undefined||S.actual===null)S.actual='';
+  if(S.float===undefined||S.float===null||isNaN(Number(S.float)))S.float=0;
+}
+normalize();
+var ui={tab:'reg',sheet:null,done:null,armed:null,csv:false,statDate:'all',exp:{date:todayKey(),cat:CATS[0],payer:''}};
 var lastTab='reg';
 
 function cartQty(id){return S.cart[id]||0;}
 function cartTotal(){return S.products.reduce(function(a,p){return a+p.price*cartQty(p.id);},0);}
 function cartPieces(){return S.products.reduce(function(a,p){return a+p.pieces*cartQty(p.id);},0);}
 function nextNo(){return S.orders.reduce(function(m,o){return Math.max(m,o.no);},0)+1;}
+function nextExpNo(){return S.expenses.reduce(function(m,e){return Math.max(m,e.no);},0)+1;}
 
-function stats(){
-  var live=S.orders.filter(function(o){return !o.cancelled;});
-  var r={total:0,count:live.length,cancelled:S.orders.length-live.length,pieces:0,
-    byMethod:{cash:{sum:0,count:0},paypay:{sum:0,count:0}},byProduct:{},byHour:{}};
+/* 売上の集計。dk（'YYYY-MM-DD'）を渡すとその日だけ、null なら全期間 */
+function stats(dk){
+  var live=S.orders.filter(function(o){return !o.cancelled&&(!dk||dateKey(o.at)===dk);});
+  var r={total:0,count:live.length,cancelled:S.orders.filter(function(o){return o.cancelled&&(!dk||dateKey(o.at)===dk);}).length,
+    pieces:0,packs:0,byMethod:{cash:{sum:0,count:0},paypay:{sum:0,count:0}},byProduct:{},byHour:{},byDay:{}};
   live.forEach(function(o){
     r.total+=o.total;
     var m=r.byMethod[o.method];m.sum+=o.total;m.count++;
     var h=new Date(o.at).getHours();r.byHour[h]=(r.byHour[h]||0)+o.total;
+    var dkey=dateKey(o.at);r.byDay[dkey]=(r.byDay[dkey]||0)+o.total;
     o.lines.forEach(function(l){
       var b=r.byProduct[l.pid];
       if(!b){
         var pm=S.products.filter(function(p){return p.id===l.pid;})[0];
         b=r.byProduct[l.pid]={name:pm?pm.name:l.name,qty:0,sum:0,pieces:0};
       }
-      b.qty+=l.qty;b.sum+=l.price*l.qty;b.pieces+=l.qty*l.pieces;r.pieces+=l.qty*l.pieces;
+      b.qty+=l.qty;b.sum+=l.price*l.qty;b.pieces+=l.qty*l.pieces;r.pieces+=l.qty*l.pieces;r.packs+=l.qty;
     });
   });
   return r;
 }
+function liveExp(dk){return S.expenses.filter(function(e){return !e.cancelled&&(!dk||e.date===dk);});}
+function expSum(dk){return liveExp(dk).reduce(function(a,e){return a+e.amount;},0);}
+/* 損益 = 売上 − PayPay手数料（概算）− 経費 */
+function pl(dk){
+  var st=stats(dk),fee=Math.round(st.byMethod.paypay.sum*(Number(S.feeRate)||0)/100),ex=expSum(dk);
+  return {st:st,sales:st.total,pp:st.byMethod.paypay.sum,fee:fee,exp:ex,net:st.total-fee-ex};
+}
+function dayKeys(){
+  var set={};
+  S.orders.forEach(function(o){set[dateKey(o.at)]=1;});
+  S.expenses.forEach(function(e){if(e.date)set[e.date]=1;});
+  return Object.keys(set).sort();
+}
 
 /* ---------- 描画 ---------- */
 function renderTabs(){
-  var tabs=[['reg','レジ'],['hist','履歴'],['stat','集計'],['set','設定']];
+  var tabs=[['reg','レジ'],['hist','履歴'],['stat','集計'],['exp','経費'],['set','設定']];
   $('#tabs').innerHTML=tabs.map(function(t){
     return '<button class="tab'+(ui.tab===t[0]?' on':'')+'" data-act="tab" data-v="'+t[0]+'"'+(ui.tab===t[0]?' aria-current="page"':'')+'>'+t[1]+'</button>';
   }).join('');
 }
 
 function regView(){
-  var total=cartTotal(),st=stats();
+  var total=cartTotal(),st=stats(todayKey());
   var vis=S.products.filter(function(p){return p.active||cartQty(p.id)>0;});
   var cards=vis.map(function(p){
     var q=cartQty(p.id);
@@ -294,7 +341,7 @@ function regView(){
   if(!vis.length)cards='<p class="empty">販売中の商品がありません。設定で商品を追加してください。</p>';
   return '<div class="reg">'+
     '<div class="reg-head"><div><div class="lab">次の注文番号</div><div class="no">#'+p3(nextNo())+'</div></div>'+
-    '<div class="r"><div class="lab">本日の売上</div><div class="today">'+yen(st.total)+'</div></div></div>'+
+    '<div class="r"><div class="lab">本日の売上（この端末）</div><div class="today">'+yen(st.total)+'</div></div></div>'+
     '<div class="cards">'+cards+'</div>'+
     '<div class="bar"><div class="sumrow"><span>合計<small>まんどぅ '+cartPieces()+'個</small></span><strong>'+yen(total)+'</strong></div>'+
     '<div class="btnrow"><button class="btn" data-act="clear"'+(total?'':' disabled')+'>全クリア</button>'+
@@ -313,7 +360,7 @@ function histView(){
     var lines=o.lines.map(function(l){return esc(shortName(l.name))+'('+yen(l.price)+') ×'+l.qty;}).join('　');
     var foot=o.method==='cash'?'預かり '+yen(o.paid)+' / お釣り '+yen(o.change):'PayPay決済';
     return '<article class="ord'+(o.cancelled?' cx':'')+'">'+
-      '<div class="ohead"><span class="ono">#'+p3(o.no)+'</span><span class="otime">'+timeStr(o.at)+'</span>'+
+      '<div class="ohead"><span class="ono">#'+p3(o.no)+'</span><span class="otime">'+mdTime(o.at)+'</span>'+
       '<span class="pill '+o.method+'">'+(o.method==='cash'?'現金':'PayPay')+'</span><span class="otot">'+yen(o.total)+'</span></div>'+
       '<div class="olines">'+lines+'</div>'+
       '<div class="ofoot"><span>'+foot+'</span>'+
@@ -324,19 +371,50 @@ function histView(){
 }
 
 function bar(label,val,max,cls){
-  var w=max>0?Math.round(val/max*100):0;
+  var w=max>0?Math.max(0,Math.round(val/max*100)):0;
   return '<div class="brow"><span>'+label+'</span><div class="bt"><i class="'+(cls||'')+'" style="width:'+w+'%"></i></div><span class="bv">'+yen(val)+'</span></div>';
 }
 function statView(){
-  var st=stats();
-  var hours=Object.keys(st.byHour).map(Number).sort(function(a,b){return a-b;});
-  var hmax=hours.reduce(function(m,h){return Math.max(m,st.byHour[h]);},0);
+  var all=pl(null),keys=dayKeys();
+  if(ui.statDate!=='all'&&keys.indexOf(ui.statDate)<0)ui.statDate='all';
+  var dk=ui.statDate==='all'?null:ui.statDate;
+  var cur=dk?pl(dk):all,st=cur.st;
+  var good=all.net>=0;
+  var need='';
+  if(!good&&all.st.packs>0&&all.sales>0){
+    var avg=all.sales/all.st.packs;
+    need='<div class="plnote">黒字まで、平均単価（'+yen(avg)+'）でおよそ あと'+Math.ceil(-all.net/avg)+'パック（概算）</div>';
+  }
+  var banner='<section class="plbox '+(good?'black':'red')+'"><div class="pllab">総合損益（全期間・この端末のデータ）</div>'+
+    '<div class="plbig">'+(good?'黒字':'赤字')+'　'+(all.net>0?'+':'')+yen(all.net)+'</div>'+
+    '<div class="plrow"><span>売上</span><b>'+yen(all.sales)+'</b></div>'+
+    '<div class="plrow"><span>PayPay手数料（'+esc(S.feeRate)+'％・概算）</span><b>−'+yen(all.fee)+'</b></div>'+
+    '<div class="plrow"><span>経費</span><b>−'+yen(all.exp)+'</b></div>'+need+
+    '<div class="plnote">全レジを合わせた損益は、合算用スプレッドシートで確認します</div></section>';
+  var chips='<div class="chips"><button class="chipb'+(dk?'':' on')+'" data-act="statdate" data-v="all">全期間</button>'+
+    keys.map(function(k){return '<button class="chipb'+(dk===k?' on':'')+'" data-act="statdate" data-v="'+k+'">'+mdLabel(k)+'</button>';}).join('')+'</div>';
   var prods=Object.keys(st.byProduct).map(function(k){return st.byProduct[k];});
-  return '<div class="pad">'+
+  var timeCard;
+  if(dk){
+    var hours=Object.keys(st.byHour).map(Number).sort(function(a,b){return a-b;});
+    var hmax=hours.reduce(function(m,h){return Math.max(m,st.byHour[h]);},0);
+    timeCard='<section class="card"><h2>時間帯別の売上</h2>'+(hours.length?hours.map(function(h){return bar(h+'時台',st.byHour[h],hmax);}).join(''):'<p class="note">データなし</p>')+'</section>';
+  }else{
+    var dks=Object.keys(st.byDay).sort();
+    var dmax=dks.reduce(function(m,k){return Math.max(m,st.byDay[k]);},0);
+    timeCard='<section class="card"><h2>日別の売上</h2>'+(dks.length?dks.map(function(k){return bar(mdLabel(k),st.byDay[k],dmax);}).join(''):'<p class="note">データなし</p>')+'</section>';
+  }
+  var cats={};
+  liveExp(dk).forEach(function(e){cats[e.cat]=(cats[e.cat]||0)+e.amount;});
+  var catKeys=Object.keys(cats);
+  var cmax=catKeys.reduce(function(m,k){return Math.max(m,cats[k]);},0);
+  var tag=dk?mdLabel(dk)+'の':'全期間の';
+  return '<div class="pad">'+banner+chips+
     '<div class="tiles">'+
-      '<div class="tile big"><div class="lab">売上合計</div><div class="val">'+yen(st.total)+'</div></div>'+
+      '<div class="tile big"><div class="lab">'+tag+'売上合計</div><div class="val">'+yen(st.total)+'</div></div>'+
       '<div class="tile"><div class="lab">注文数</div><div class="val">'+st.count+'件</div></div>'+
       '<div class="tile"><div class="lab">まんどぅ総個数</div><div class="val">'+st.pieces+'個</div></div>'+
+      '<div class="tile pl '+(cur.net>=0?'black':'red')+'"><div class="lab">'+tag+'損益（手数料・経費込み）</div><div class="val">'+(cur.net>0?'+':'')+yen(cur.net)+'</div></div>'+
     '</div>'+
     '<section class="card"><h2>支払い方法別</h2>'+
       bar('現金 '+st.byMethod.cash.count+'件',st.byMethod.cash.sum,st.total,'cash')+
@@ -346,16 +424,41 @@ function statView(){
       (prods.length?prods.map(function(b){
         return '<div class="prow"><span>'+esc(b.name)+'</span><span><b>'+b.qty+'</b>パック / <b>'+b.pieces+'</b>個 / <b>'+yen(b.sum)+'</b></span></div>';
       }).join(''):'<p class="note">データなし</p>')+
-    '</section>'+
-    '<section class="card"><h2>時間帯別の売上</h2>'+
-      (hours.length?hours.map(function(h){return bar(h+'時台',st.byHour[h],hmax);}).join(''):'<p class="note">データなし</p>')+
+    '</section>'+timeCard+
+    '<section class="card"><h2>経費の内訳（合計 '+yen(cur.exp)+'）</h2>'+
+      (catKeys.length?catKeys.map(function(k){return bar(esc(k),cats[k],cmax,'exp');}).join(''):'<p class="note">経費はまだありません</p>')+
     '</section>'+
     (st.cancelled?'<p class="note">取消 '+st.cancelled+'件は集計に含めていません。</p>':'')+
   '</div>';
 }
 
+function expView(){
+  var d=ui.exp,total=expSum(null);
+  var opts=CATS.map(function(c){return '<option'+(c===d.cat?' selected':'')+'>'+esc(c)+'</option>';}).join('');
+  var list=S.expenses.slice().reverse().map(function(e){
+    return '<article class="ord'+(e.cancelled?' cx':'')+'">'+
+      '<div class="ohead"><span class="ono">'+mdLabel(e.date)+'</span><span class="otime">'+esc(e.cat)+'</span><span class="otot">'+yen(e.amount)+'</span></div>'+
+      ((e.memo||e.payer)?'<div class="olines">'+esc(e.memo)+(e.payer?'（立替: '+esc(e.payer)+'）':'')+'</div>':'')+
+      '<div class="ofoot"><span>No.'+e.no+'　'+esc(e.dev||'')+'</span>'+
+      (e.cancelled?'<span class="pill cx">削除済み</span>':dangerBtn('expdel:'+e.no,'削除','もう一度タップで削除'))+
+      '</div></article>';
+  }).join('');
+  return '<div class="pad">'+
+    '<section class="card"><h2>経費を追加</h2>'+
+      '<div class="two"><label for="e-date">日付<input type="date" id="e-date" value="'+esc(d.date)+'"></label>'+
+      '<label for="e-cat">項目<select id="e-cat">'+opts+'</select></label></div>'+
+      '<div class="two"><label for="e-amt">金額（円）<input type="number" inputmode="numeric" min="0" id="e-amt"></label>'+
+      '<label for="e-payer">立替者（任意）<input type="text" id="e-payer" value="'+esc(d.payer)+'"></label></div>'+
+      '<label for="e-memo">メモ（任意）<input type="text" id="e-memo" placeholder="例：まんどぅの材料"></label>'+
+      '<button class="btn primary block" data-act="exp-add">経費を追加</button>'+
+      '<p class="note">開催前に買ったものも、日付を変えて入れられます。同じ経費を別の端末にも入れると二重になるので、経費を入れる端末を決めてください。</p>'+
+    '</section>'+
+    '<section class="card"><h2>経費一覧　合計 '+yen(total)+'</h2>'+(list||'<p class="note">まだありません</p>')+'</section>'+
+  '</div>';
+}
+
 function closeCalc(){
-  var st=stats();
+  var st=stats(todayKey());
   var exp=(Number(S.float)||0)+st.byMethod.cash.sum;
   var act=S.actual===''?null:Number(S.actual);
   return {cash:st.byMethod.cash.sum,exp:exp,act:act,diff:act===null?null:act-exp};
@@ -366,19 +469,31 @@ function closeBoxHTML(){
   else if(c.diff===0)d='<div class="diff ok">過不足なし</div>';
   else if(c.diff>0)d='<div class="diff warn">'+yen(c.diff)+' 多い</div>';
   else d='<div class="diff bad">'+yen(-c.diff)+' 不足</div>';
-  return '<div class="crow"><span>現金売上</span><b>'+yen(c.cash)+'</b></div>'+
-    '<div class="crow"><span>理論上の現金（準備金＋現金売上）</span><b>'+yen(c.exp)+'</b></div>'+d;
+  return '<div class="crow"><span>本日の現金売上</span><b>'+yen(c.cash)+'</b></div>'+
+    '<div class="crow"><span>理論上の現金（準備金＋本日の現金売上）</span><b>'+yen(c.exp)+'</b></div>'+d;
 }
-function csvText(){
-  function q(s){return '"'+String(s).replace(/"/g,'""')+'"';}
-  var rows=['注文番号,時刻,支払い,商品,合計,預かり,お釣り,状態,レジ名'];
+
+/* ---- CSV / コピー用（タブ区切り） ---- */
+function salesRows(){
+  var rows=[['注文番号','日付','時刻','月日','時','支払い','商品','単価','数量','小計','個数','状態','レジ名','件数']];
   S.orders.forEach(function(o){
-    rows.push([o.no,timeStr(o.at),o.method==='cash'?'現金':'PayPay',
-      q(o.lines.map(function(l){return shortName(l.name)+'('+l.price+'円)x'+l.qty;}).join(' / ')),
-      o.total,o.paid===null?'':o.paid,o.method==='cash'?o.change:'',o.cancelled?'取消':'有効',q(o.dev||S.device)].join(','));
+    var d=new Date(o.at),md=(d.getMonth()+1)*100+d.getDate();
+    o.lines.forEach(function(l,i){
+      rows.push([o.no,dateKey(o.at),timeStr(o.at),md,d.getHours(),o.method==='cash'?'現金':'PayPay',l.name,l.price,l.qty,l.price*l.qty,l.qty*l.pieces,o.cancelled?'取消':'有効',o.dev||S.device,i===0?1:0]);
+    });
   });
-  return rows.join('\n');
+  return rows;
 }
+function expRows(){
+  var rows=[['番号','日付','月日','項目','金額','メモ','立替者','状態','レジ名']];
+  S.expenses.forEach(function(e){
+    rows.push([e.no,e.date,mdNum(e.date),e.cat,e.amount,e.memo||'',e.payer||'',e.cancelled?'取消':'有効',e.dev||S.device]);
+  });
+  return rows;
+}
+function toCSV(rows){return rows.map(function(r){return r.map(function(c){return typeof c==='string'?'"'+c.replace(/"/g,'""')+'"':String(c);}).join(',');}).join('\n');}
+function toTSV(rows){return rows.map(function(r){return r.map(function(c){return String(c).replace(/[\t\r\n]+/g,' ');}).join('\t');}).join('\n');}
+
 function setView(){
   var prods=S.products.map(function(p){
     return '<div class="prod">'+
@@ -388,23 +503,33 @@ function setView(){
       '<label class="check" for="act-'+p.id+'"><input type="checkbox" id="act-'+p.id+'" data-f="active" data-id="'+p.id+'"'+(p.active?' checked':'')+'>販売中（オフで売り切れ扱い）</label>'+
     '</div>';
   }).join('');
+  var csvBlock='';
+  if(ui.csv){
+    csvBlock='<textarea id="csvtext" readonly aria-label="貼り付け用データ">'+esc(toTSV(ui.csv==='sales'?salesRows():expRows()))+'</textarea>'+
+      '<button class="btn small" data-act="csv-copy">コピー</button>'+
+      '<p class="note">タブ区切りです。合算用スプレッドシートに、そのまま貼り付けられます。</p>';
+  }
   return '<div class="pad">'+
     '<section class="card"><h2>商品と価格</h2>'+prods+
       '<p class="note">価格を変えても、過去の注文は販売した時点の価格のまま保存・集計されます。</p>'+
       '<button class="btn small" data-act="prod-add">商品を追加</button></section>'+
-    '<section class="card"><h2>レジ締め（現金の照合）</h2>'+
+    '<section class="card"><h2>PayPay手数料</h2>'+
+      '<label for="fee">手数料率（％）<input type="number" inputmode="decimal" min="0" max="100" step="0.01" id="fee" value="'+esc(S.feeRate)+'"></label>'+
+      '<p class="note">損益の計算で、PayPayの売上から差し引きます（概算）。</p></section>'+
+    '<section class="card"><h2>レジ締め（本日の現金）</h2>'+
       '<div class="two"><label for="float">釣銭準備金（円）<input type="number" inputmode="numeric" min="0" id="float" value="'+esc(S.float)+'"></label>'+
       '<label for="actual">実際に数えた現金（円）<input type="number" inputmode="numeric" min="0" id="actual" value="'+esc(S.actual)+'"></label></div>'+
       '<div class="close-box" id="closebox">'+closeBoxHTML()+'</div></section>'+
     '<section class="card"><h2>データ</h2>'+
-      '<label for="device">レジ名（CSVに記録されます）<input type="text" id="device" value="'+esc(S.device)+'"></label>'+
-      '<div class="two"><button class="btn small" data-act="csv-dl">CSVを保存</button><button class="btn small" data-act="backup">バックアップを保存</button></div>'+
+      '<label for="device">レジ名（データに記録されます）<input type="text" id="device" value="'+esc(S.device)+'"></label>'+
+      '<div class="two"><button class="btn small" data-act="dl" data-v="sales">売上CSVを保存</button><button class="btn small" data-act="dl" data-v="exp">経費CSVを保存</button></div>'+
+      '<button class="btn small" data-act="backup">バックアップを保存</button>'+
+      '<div class="two"><button class="btn small" data-act="csv" data-v="sales">売上を表示してコピー</button><button class="btn small" data-act="csv" data-v="exp">経費を表示してコピー</button></div>'+
+      csvBlock+
       '<label for="restore">バックアップを読み込む（現在のデータを置き換え）<input type="file" id="restore" accept="application/json,.json"></label>'+
-      '<button class="btn small" data-act="csv">'+(ui.csv?'CSVを閉じる':'CSVを表示してコピー')+'</button>'+
-      (ui.csv?'<textarea id="csvtext" readonly aria-label="CSVデータ">'+esc(csvText())+'</textarea><button class="btn small" data-act="csv-copy">コピー</button>':'')+
-      '<p class="note">データはこの端末の中にだけ保存されます。休憩ごとにCSVかバックアップを保存してください。複数台で使う場合は、CSVを集めて合算します。</p>'+
-      dangerBtn('reset','練習用デモデータを入れる（現在の注文は消えます）','もう一度タップで入れ替え','block')+
-      dangerBtn('wipe','全注文を消去して本番を始める','もう一度タップで全消去','block')+
+      '<p class="note">データはこの端末の中にだけ保存されます。休憩ごとにバックアップを保存してください。</p>'+
+      dangerBtn('wipe','全データを消去（注文・経費。元に戻せません）','もう一度タップで全消去','block')+
+      '<p class="note">バージョン '+VERSION+'</p>'+
     '</section>'+
   '</div>';
 }
@@ -452,17 +577,19 @@ function doneHTML(){
 
 function render(){
   var m=$('#main'),top=m.scrollTop;
-  var views={reg:regView,hist:histView,stat:statView,set:setView};
+  var views={reg:regView,hist:histView,stat:statView,exp:expView,set:setView};
   m.innerHTML=views[ui.tab]();
   if(ui.tab===lastTab)m.scrollTop=top;else m.scrollTop=0;
   lastTab=ui.tab;
   renderTabs();
-  $('#chip').textContent=S.demo?'デモデータ':S.device;
+  var chip=$('#chip');
+  chip.textContent=S.demo?'デモデータ':S.device;
+  chip.className='chip'+(S.demo?' demo':'');
   $('#overlay').innerHTML=ui.done?doneHTML():(ui.sheet?sheetHTML():'');
 }
 function toast(msg){
   var t=$('#toast');t.innerHTML='<div class="toast">'+esc(msg)+'</div>';
-  setTimeout(function(){t.innerHTML='';},1800);
+  setTimeout(function(){t.innerHTML='';},2200);
 }
 function buzz(){try{if(navigator.vibrate)navigator.vibrate(12);}catch(e){}}
 
@@ -483,21 +610,23 @@ function doDanger(k){
     var no=Number(k.split(':')[1]);
     S.orders.forEach(function(o){if(o.no===no)o.cancelled=true;});
     save();render();toast('#'+p3(no)+' を取り消しました');
+  }else if(k.indexOf('expdel:')===0){
+    var eno=Number(k.split(':')[1]);
+    S.expenses.forEach(function(e){if(e.no===eno)e.cancelled=true;});
+    save();render();toast('経費 No.'+eno+' を削除しました');
   }else if(k==='doneCancel'){
     if(ui.done){ui.done.cancelled=true;toast('#'+p3(ui.done.no)+' を取り消しました');}
     ui.done=null;save();render();
-  }else if(k==='reset'){
-    var dv=S.device;S=seed();S.device=dv;ui.csv=false;save();render();toast('デモデータを入れました');
   }else if(k==='wipe'){
-    S.orders=[];S.cart={};S.actual='';S.demo=false;ui.csv=false;save();render();toast('全注文を消去しました');
+    S.orders=[];S.expenses=[];S.cart={};S.actual='';S.demo=false;ui.csv=false;save();render();toast('全データを消去しました');
   }
 }
 function findProd(id){return S.products.filter(function(p){return p.id===id;})[0];}
 function stamp(){var d=new Date();return d.getFullYear()+pad2(d.getMonth()+1)+pad2(d.getDate())+'-'+pad2(d.getHours())+pad2(d.getMinutes());}
-function devSlug(){return (S.device||'register').replace(/[^\w\u3040-\u30ff\u4e00-\u9fff-]/g,'')||'register';}
+function devSlug(){return (S.device||'register').replace(/[^\w぀-ヿ一-鿿-]/g,'')||'register';}
 function download(name,text,type,bom){
   try{
-    var b=new Blob([(bom?'\ufeff':'')+text],{type:type});
+    var b=new Blob([(bom?'﻿':'')+text],{type:type});
     var u=URL.createObjectURL(b),a=document.createElement('a');
     a.href=u;a.download=name;document.body.appendChild(a);a.click();
     setTimeout(function(){URL.revokeObjectURL(u);a.remove();},1500);
@@ -529,25 +658,35 @@ document.addEventListener('click',function(e){
   else if(a==='ppcheck'){sh.confirmed=!sh.confirmed;render();}
   else if(a==='confirm'){confirmSale();}
   else if(a==='done-close'){ui.done=null;render();}
+  else if(a==='statdate'){ui.statDate=v;render();}
   else if(a==='prod-add'){
     var n=S.products.length+1;
     S.products.push({id:'p'+Date.now(),name:'新しい商品'+n,price:0,pieces:1,active:false});
     save();render();
   }
-  else if(a==='csv'){ui.csv=!ui.csv;render();}
-  else if(a==='csv-dl'){
-    var okc=download('mandu-'+devSlug()+'-'+stamp()+'.csv',csvText(),'text/csv;charset=utf-8',true);
-    toast(okc?'CSVを保存しました（保存されない場合は「CSVを表示してコピー」）':'保存できませんでした。「CSVを表示してコピー」を使ってください');
+  else if(a==='exp-add'){
+    var date=$('#e-date').value||todayKey(),cat=$('#e-cat').value;
+    var amt=Math.round(Number($('#e-amt').value)||0);
+    var memo=$('#e-memo').value.trim(),payer=$('#e-payer').value.trim();
+    ui.exp={date:date,cat:cat,payer:payer};
+    if(amt<=0){toast('金額を入力してください');return;}
+    S.expenses.push({no:nextExpNo(),at:Date.now(),date:date,cat:cat,amount:amt,memo:memo,payer:payer,cancelled:false,dev:S.device});
+    save();render();toast('経費を追加しました（'+yen(amt)+'）');
+  }
+  else if(a==='csv'){ui.csv=(ui.csv===v)?false:v;render();}
+  else if(a==='dl'){
+    var rows=v==='sales'?salesRows():expRows();
+    var ok=download('mandu-'+(v==='sales'?'sales':'expenses')+'-'+devSlug()+'-'+stamp()+'.csv',toCSV(rows),'text/csv;charset=utf-8',true);
+    toast(ok?'CSVを保存しました（保存されない場合は「表示してコピー」を使ってください）':'保存できませんでした。「表示してコピー」を使ってください');
   }
   else if(a==='backup'){
     var okb=download('mandu-backup-'+devSlug()+'-'+stamp()+'.json',JSON.stringify(S),'application/json',false);
     toast(okb?'バックアップを保存しました':'保存できませんでした');
   }
   else if(a==='csv-copy'){
-    var ta=$('#csvtext');
-    var ok=false;
-    try{ta.focus();ta.select();ok=document.execCommand('copy');}catch(err){}
-    toast(ok?'コピーしました':'選択しました。長押ししてコピーしてください');
+    var ta=$('#csvtext'),okc=false;
+    try{ta.focus();ta.select();okc=document.execCommand('copy');}catch(err){}
+    toast(okc?'コピーしました':'選択しました。長押ししてコピーしてください');
   }
   else if(hadArmed){render();}
 });
@@ -560,8 +699,7 @@ document.addEventListener('change',function(e){
       try{
         var d=JSON.parse(rd.result);
         if(!d||!Array.isArray(d.products)||!Array.isArray(d.orders))throw new Error('bad');
-        S=d;if(!S.cart)S.cart={};if(!S.device)S.device='レジ1';
-        save();render();toast('バックアップを読み込みました');
+        S=d;normalize();save();render();toast('バックアップを読み込みました');
       }catch(err){toast('読み込めませんでした。バックアップのファイルを確認してください');}
     };
     rd.readAsText(file);return;
@@ -579,6 +717,7 @@ document.addEventListener('change',function(e){
 document.addEventListener('input',function(e){
   var id=e.target.id;
   if(id==='device'){S.device=e.target.value;save();$('#chip').textContent=S.demo?'デモデータ':(S.device||'');return;}
+  if(id==='fee'){var fr=Number(e.target.value);S.feeRate=isNaN(fr)||fr<0?0:fr;save();return;}
   if(id==='float'||id==='actual'){
     var raw=e.target.value;
     if(id==='float')S.float=raw===''?0:Number(raw);else S.actual=raw;
@@ -601,6 +740,12 @@ document.addEventListener('visibilitychange',lockScreen);
 document.addEventListener('click',lockScreen,{once:true});
 lockScreen();
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){
+  var hadController=!!navigator.serviceWorker.controller;
+  /* 新しい版に切り替わったら、操作中でないときだけ自動で読み込み直す */
+  navigator.serviceWorker.addEventListener('controllerchange',function(){
+    var tag=document.activeElement&&document.activeElement.tagName;
+    if(hadController&&!ui.sheet&&!ui.done&&cartTotal()===0&&tag!=='INPUT'&&tag!=='SELECT'&&tag!=='TEXTAREA')location.reload();
+  });
   window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});
 }
 })();

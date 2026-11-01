@@ -1,6 +1,6 @@
 // まんどぅレジ オフライン用 Service Worker
-// index.html などを更新して公開するときは、下の CACHE の番号を上げてください（v1 → v2）。
-const CACHE = 'mandu-pos-v1';
+// index.html などを更新して公開するときは、下の CACHE の番号を上げてください（v2 → v3）。
+const CACHE = 'mandu-pos-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -10,9 +10,17 @@ const ASSETS = [
   './apple-touch-icon.png'
 ];
 
+// インストール時は、ブラウザの一時保存（HTTPキャッシュ）を使わず、最新のファイルを取りに行く
 self.addEventListener('install', (e) => {
   e.waitUntil(
-    caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting())
+    caches.open(CACHE)
+      .then((c) => Promise.all(ASSETS.map((u) =>
+        fetch(new Request(u, { cache: 'reload' })).then((r) => {
+          if (!r.ok) throw new Error('fetch failed: ' + u);
+          return c.put(u, r);
+        })
+      )))
+      .then(() => self.skipWaiting())
   );
 });
 
@@ -29,18 +37,21 @@ self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
   if (new URL(req.url).origin !== location.origin) return;
-  e.respondWith(
-    caches.match(req, { ignoreSearch: true }).then((hit) => {
-      const net = fetch(req)
-        .then((res) => {
-          if (res && res.ok) {
-            const copy = res.clone();
-            caches.open(CACHE).then((c) => c.put(req, copy));
-          }
-          return res;
-        })
-        .catch(() => hit);
-      return hit || net;
-    })
-  );
+  e.respondWith((async () => {
+    const hit = await caches.match(req, { ignoreSearch: true });
+    const net = fetch(new Request(req.url, { cache: 'no-cache' }))
+      .then((res) => {
+        if (res && res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(req.url, copy));
+        }
+        return res;
+      })
+      .catch(() => hit);
+    if (hit) {
+      e.waitUntil(net.catch(() => {}));
+      return hit;
+    }
+    return net;
+  })());
 });
