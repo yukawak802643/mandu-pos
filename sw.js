@@ -1,6 +1,6 @@
 // まんどぅレジ オフライン用 Service Worker
-// index.html などを更新して公開するときは、下の CACHE の番号を上げてください（v2 → v3）。
-const CACHE = 'mandu-pos-v2';
+// index.html などを更新して公開するときは、下の CACHE の番号を上げてください（v4 → v5）。
+const CACHE = 'mandu-pos-v4';
 const ASSETS = [
   './',
   './index.html',

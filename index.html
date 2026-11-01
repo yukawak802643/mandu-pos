@@ -52,6 +52,9 @@ input,textarea,select{user-select:text;-webkit-user-select:text}
 .brand{font-weight:900;font-size:18px;letter-spacing:.02em;flex:1}
 .chip{font-size:12px;font-weight:700;padding:2px 10px;border-radius:99px;background:var(--accent-soft);color:var(--accent)}
 .chip.demo{background:var(--warn-soft);color:var(--warn)}
+.chip.ok{background:var(--good-soft);color:var(--good)}
+.chip.warn{background:var(--warn-soft);color:var(--warn)}
+.chip.bad{background:var(--bad-soft);color:var(--bad)}
 main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 .tabs{display:grid;grid-template-columns:repeat(5,1fr);background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
 .tab{border:0;background:none;padding:14px 2px;font-weight:700;font-size:14px;color:var(--muted);border-top:3px solid transparent}
@@ -204,7 +207,7 @@ textarea{width:100%;height:120px;border:2px solid var(--line);border-radius:10px
 </head>
 <body>
 <div class="app" id="app">
-  <header class="top"><div class="brand">まんどぅレジ</div><span class="chip" id="chip"></span></header>
+  <header class="top"><div class="brand">まんどぅレジ</div><span class="chip" id="sync" hidden></span><span class="chip" id="chip"></span></header>
   <main id="main"></main>
   <nav class="tabs" id="tabs" aria-label="画面の切り替え"></nav>
   <div id="overlay"></div>
@@ -213,7 +216,7 @@ textarea{width:100%;height:120px;border:2px solid var(--line);border-radius:10px
 <script>
 (function(){
 'use strict';
-var VERSION='2.0';
+var VERSION='3.1';
 /* 1日目のデータを引き継ぐため、保存キーは変えない */
 var KEY='mandu-register-v1';
 var CATS=['材料費','容器・包装','調理器具・備品','出店料・申請費','交通費','広告・装飾','その他'];
@@ -272,9 +275,18 @@ function normalize(){
   if(typeof S.feeRate!=='number'||isNaN(S.feeRate))S.feeRate=1.98;
   if(S.actual===undefined||S.actual===null)S.actual='';
   if(S.float===undefined||S.float===null||isNaN(Number(S.float)))S.float=0;
+  if(!S.sync||typeof S.sync!=='object')S.sync={};
+  if(typeof S.sync.code!=='string')S.sync.code='';
+  if(!S.sync.outbox||typeof S.sync.outbox!=='object')S.sync.outbox={};
+  if(!S.sync.seq)S.sync.seq=0;
+  if(!S.sync.lastOk)S.sync.lastOk=0;
+  if(typeof S.sync.lastErr!=='string')S.sync.lastErr='';
+  if(!S.remote||typeof S.remote!=='object')S.remote={orders:[],expenses:[],at:0};
+  if(!Array.isArray(S.remote.orders))S.remote.orders=[];
+  if(!Array.isArray(S.remote.expenses))S.remote.expenses=[];
 }
 normalize();
-var ui={tab:'reg',sheet:null,done:null,armed:null,csv:false,statDate:'all',exp:{date:todayKey(),cat:CATS[0],payer:''}};
+var ui={tab:'reg',sheet:null,done:null,armed:null,csv:false,statDate:'all',scope:null,link:'',exp:{date:todayKey(),cat:CATS[0],payer:''}};
 var lastTab='reg';
 
 function cartQty(id){return S.cart[id]||0;}
@@ -284,9 +296,10 @@ function nextNo(){return S.orders.reduce(function(m,o){return Math.max(m,o.no);}
 function nextExpNo(){return S.expenses.reduce(function(m,e){return Math.max(m,e.no);},0)+1;}
 
 /* 売上の集計。dk（'YYYY-MM-DD'）を渡すとその日だけ、null なら全期間 */
-function stats(dk){
-  var live=S.orders.filter(function(o){return !o.cancelled&&(!dk||dateKey(o.at)===dk);});
-  var r={total:0,count:live.length,cancelled:S.orders.filter(function(o){return o.cancelled&&(!dk||dateKey(o.at)===dk);}).length,
+function stats(dk,scope){
+  var all_=ordersFor(scope);
+  var live=all_.filter(function(o){return !o.cancelled&&(!dk||dateKey(o.at)===dk);});
+  var r={total:0,count:live.length,cancelled:all_.filter(function(o){return o.cancelled&&(!dk||dateKey(o.at)===dk);}).length,
     pieces:0,packs:0,byMethod:{cash:{sum:0,count:0},paypay:{sum:0,count:0}},byProduct:{},byHour:{},byDay:{}};
   live.forEach(function(o){
     r.total+=o.total;
@@ -304,17 +317,17 @@ function stats(dk){
   });
   return r;
 }
-function liveExp(dk){return S.expenses.filter(function(e){return !e.cancelled&&(!dk||e.date===dk);});}
-function expSum(dk){return liveExp(dk).reduce(function(a,e){return a+e.amount;},0);}
+function liveExp(dk,scope){return expensesFor(scope).filter(function(e){return !e.cancelled&&(!dk||e.date===dk);});}
+function expSum(dk,scope){return liveExp(dk,scope).reduce(function(a,e){return a+e.amount;},0);}
 /* 損益 = 売上 − PayPay手数料（概算）− 経費 */
-function pl(dk){
-  var st=stats(dk),fee=Math.round(st.byMethod.paypay.sum*(Number(S.feeRate)||0)/100),ex=expSum(dk);
+function pl(dk,scope){
+  var st=stats(dk,scope),fee=Math.round(st.byMethod.paypay.sum*(Number(S.feeRate)||0)/100),ex=expSum(dk,scope);
   return {st:st,sales:st.total,pp:st.byMethod.paypay.sum,fee:fee,exp:ex,net:st.total-fee-ex};
 }
-function dayKeys(){
+function dayKeys(scope){
   var set={};
-  S.orders.forEach(function(o){set[dateKey(o.at)]=1;});
-  S.expenses.forEach(function(e){if(e.date)set[e.date]=1;});
+  ordersFor(scope).forEach(function(o){set[dateKey(o.at)]=1;});
+  expensesFor(scope).forEach(function(e){if(e.date)set[e.date]=1;});
   return Object.keys(set).sort();
 }
 
@@ -351,7 +364,7 @@ function regView(){
 
 function dangerBtn(key,label,armedLabel,extra){
   var on=ui.armed===key;
-  return '<button class="btn small danger'+(on?' armed':'')+' '+(extra||'')+'" data-act="danger" data-k="'+key+'">'+(on?armedLabel:label)+'</button>';
+  return '<button class="btn small danger'+(on?' armed':'')+' '+(extra||'')+'" data-act="danger" data-k="'+esc(key)+'">'+(on?armedLabel:label)+'</button>';
 }
 
 function histView(){
@@ -375,22 +388,23 @@ function bar(label,val,max,cls){
   return '<div class="brow"><span>'+label+'</span><div class="bt"><i class="'+(cls||'')+'" style="width:'+w+'%"></i></div><span class="bv">'+yen(val)+'</span></div>';
 }
 function statView(){
-  var all=pl(null),keys=dayKeys();
+  var scope=curScope();
+  var all=pl(null,scope),keys=dayKeys(scope);
   if(ui.statDate!=='all'&&keys.indexOf(ui.statDate)<0)ui.statDate='all';
   var dk=ui.statDate==='all'?null:ui.statDate;
-  var cur=dk?pl(dk):all,st=cur.st;
+  var cur=dk?pl(dk,scope):all,st=cur.st;
   var good=all.net>=0;
   var need='';
   if(!good&&all.st.packs>0&&all.sales>0){
     var avg=all.sales/all.st.packs;
     need='<div class="plnote">黒字まで、平均単価（'+yen(avg)+'）でおよそ あと'+Math.ceil(-all.net/avg)+'パック（概算）</div>';
   }
-  var banner='<section class="plbox '+(good?'black':'red')+'"><div class="pllab">総合損益（全期間・この端末のデータ）</div>'+
+  var banner='<section class="plbox '+(good?'black':'red')+'"><div class="pllab">総合損益（全期間・'+(scope==='all'?'全レジ':'この端末のデータ')+'）</div>'+
     '<div class="plbig">'+(good?'黒字':'赤字')+'　'+(all.net>0?'+':'')+yen(all.net)+'</div>'+
     '<div class="plrow"><span>売上</span><b>'+yen(all.sales)+'</b></div>'+
     '<div class="plrow"><span>PayPay手数料（'+esc(S.feeRate)+'％・概算）</span><b>−'+yen(all.fee)+'</b></div>'+
     '<div class="plrow"><span>経費</span><b>−'+yen(all.exp)+'</b></div>'+need+
-    '<div class="plnote">全レジを合わせた損益は、合算用スプレッドシートで確認します</div></section>';
+    '<div class="plnote">'+scopeNote()+'</div></section>';
   var chips='<div class="chips"><button class="chipb'+(dk?'':' on')+'" data-act="statdate" data-v="all">全期間</button>'+
     keys.map(function(k){return '<button class="chipb'+(dk===k?' on':'')+'" data-act="statdate" data-v="'+k+'">'+mdLabel(k)+'</button>';}).join('')+'</div>';
   var prods=Object.keys(st.byProduct).map(function(k){return st.byProduct[k];});
@@ -405,11 +419,11 @@ function statView(){
     timeCard='<section class="card"><h2>日別の売上</h2>'+(dks.length?dks.map(function(k){return bar(mdLabel(k),st.byDay[k],dmax);}).join(''):'<p class="note">データなし</p>')+'</section>';
   }
   var cats={};
-  liveExp(dk).forEach(function(e){cats[e.cat]=(cats[e.cat]||0)+e.amount;});
+  liveExp(dk,scope).forEach(function(e){cats[e.cat]=(cats[e.cat]||0)+e.amount;});
   var catKeys=Object.keys(cats);
   var cmax=catKeys.reduce(function(m,k){return Math.max(m,cats[k]);},0);
   var tag=dk?mdLabel(dk)+'の':'全期間の';
-  return '<div class="pad">'+banner+chips+
+  return '<div class="pad">'+banner+scopeChips()+chips+
     '<div class="tiles">'+
       '<div class="tile big"><div class="lab">'+tag+'売上合計</div><div class="val">'+yen(st.total)+'</div></div>'+
       '<div class="tile"><div class="lab">注文数</div><div class="val">'+st.count+'件</div></div>'+
@@ -433,14 +447,14 @@ function statView(){
 }
 
 function expView(){
-  var d=ui.exp,total=expSum(null);
+  var d=ui.exp,total=expSum(null,expScope());
   var opts=CATS.map(function(c){return '<option'+(c===d.cat?' selected':'')+'>'+esc(c)+'</option>';}).join('');
-  var list=S.expenses.slice().reverse().map(function(e){
+  var list=expensesFor(expScope()).slice().reverse().map(function(e){
     return '<article class="ord'+(e.cancelled?' cx':'')+'">'+
       '<div class="ohead"><span class="ono">'+mdLabel(e.date)+'</span><span class="otime">'+esc(e.cat)+'</span><span class="otot">'+yen(e.amount)+'</span></div>'+
       ((e.memo||e.payer)?'<div class="olines">'+esc(e.memo)+(e.payer?'（立替: '+esc(e.payer)+'）':'')+'</div>':'')+
       '<div class="ofoot"><span>No.'+e.no+'　'+esc(e.dev||'')+'</span>'+
-      (e.cancelled?'<span class="pill cx">削除済み</span>':dangerBtn('expdel:'+e.no,'削除','もう一度タップで削除'))+
+      (e.cancelled?'<span class="pill cx">削除済み</span>':dangerBtn('expdel:'+kE(e),'削除','もう一度タップで削除'))+
       '</div></article>';
   }).join('');
   return '<div class="pad">'+
@@ -451,7 +465,7 @@ function expView(){
       '<label for="e-payer">立替者（任意）<input type="text" id="e-payer" value="'+esc(d.payer)+'"></label></div>'+
       '<label for="e-memo">メモ（任意）<input type="text" id="e-memo" placeholder="例：まんどぅの材料"></label>'+
       '<button class="btn primary block" data-act="exp-add">経費を追加</button>'+
-      '<p class="note">開催前に買ったものも、日付を変えて入れられます。同じ経費を別の端末にも入れると二重になるので、経費を入れる端末を決めてください。</p>'+
+      '<p class="note">開催前に買ったものも、日付を変えて入れられます。'+(syncOn()?'共有中なので、全レジの経費がここに集まります。どの端末から入れても構いません。':'共有していないので、この端末の経費だけが表示されます。同じ経費を別の端末にも入れると二重になるので、経費を入れる端末を決めてください。')+'</p>'+
     '</section>'+
     '<section class="card"><h2>経費一覧　合計 '+yen(total)+'</h2>'+(list||'<p class="note">まだありません</p>')+'</section>'+
   '</div>';
@@ -476,7 +490,7 @@ function closeBoxHTML(){
 /* ---- CSV / コピー用（タブ区切り） ---- */
 function salesRows(){
   var rows=[['注文番号','日付','時刻','月日','時','支払い','商品','単価','数量','小計','個数','状態','レジ名','件数']];
-  S.orders.forEach(function(o){
+  ordersFor(syncOn()?'all':'dev').forEach(function(o){
     var d=new Date(o.at),md=(d.getMonth()+1)*100+d.getDate();
     o.lines.forEach(function(l,i){
       rows.push([o.no,dateKey(o.at),timeStr(o.at),md,d.getHours(),o.method==='cash'?'現金':'PayPay',l.name,l.price,l.qty,l.price*l.qty,l.qty*l.pieces,o.cancelled?'取消':'有効',o.dev||S.device,i===0?1:0]);
@@ -486,7 +500,7 @@ function salesRows(){
 }
 function expRows(){
   var rows=[['番号','日付','月日','項目','金額','メモ','立替者','状態','レジ名']];
-  S.expenses.forEach(function(e){
+  expensesFor(syncOn()?'all':'dev').forEach(function(e){
     rows.push([e.no,e.date,mdNum(e.date),e.cat,e.amount,e.memo||'',e.payer||'',e.cancelled?'取消':'有効',e.dev||S.device]);
   });
   return rows;
@@ -520,6 +534,7 @@ function setView(){
       '<div class="two"><label for="float">釣銭準備金（円）<input type="number" inputmode="numeric" min="0" id="float" value="'+esc(S.float)+'"></label>'+
       '<label for="actual">実際に数えた現金（円）<input type="number" inputmode="numeric" min="0" id="actual" value="'+esc(S.actual)+'"></label></div>'+
       '<div class="close-box" id="closebox">'+closeBoxHTML()+'</div></section>'+
+    syncCardHTML()+
     '<section class="card"><h2>データ</h2>'+
       '<label for="device">レジ名（データに記録されます）<input type="text" id="device" value="'+esc(S.device)+'"></label>'+
       '<div class="two"><button class="btn small" data-act="dl" data-v="sales">売上CSVを保存</button><button class="btn small" data-act="dl" data-v="exp">経費CSVを保存</button></div>'+
@@ -528,7 +543,7 @@ function setView(){
       csvBlock+
       '<label for="restore">バックアップを読み込む（現在のデータを置き換え）<input type="file" id="restore" accept="application/json,.json"></label>'+
       '<p class="note">データはこの端末の中にだけ保存されます。休憩ごとにバックアップを保存してください。</p>'+
-      dangerBtn('wipe','全データを消去（注文・経費。元に戻せません）','もう一度タップで全消去','block')+
+      dangerBtn('wipe','この端末の全データを消去（元に戻せません。共有先のデータは消えません）','もう一度タップで全消去','block')+
       '<p class="note">バージョン '+VERSION+'</p>'+
     '</section>'+
   '</div>';
@@ -585,6 +600,7 @@ function render(){
   var chip=$('#chip');
   chip.textContent=S.demo?'デモデータ':S.device;
   chip.className='chip'+(S.demo?' demo':'');
+  renderSyncChip();
   $('#overlay').innerHTML=ui.done?doneHTML():(ui.sheet?sheetHTML():'');
 }
 function toast(msg){
@@ -603,19 +619,18 @@ function confirmSale(){
     return {pid:p.id,name:p.name,price:p.price,pieces:p.pieces,qty:cartQty(p.id)};
   });
   var o={no:nextNo(),at:Date.now(),lines:lines,total:total,method:sh.method,paid:paid,change:change,cancelled:false,dev:S.device};
-  S.orders.push(o);S.cart={};ui.sheet=null;ui.done=o;save();render();
+  S.orders.push(o);S.cart={};ui.sheet=null;ui.done=o;save();qOrder(o);render();
 }
 function doDanger(k){
   if(k.indexOf('cancel:')===0){
     var no=Number(k.split(':')[1]);
-    S.orders.forEach(function(o){if(o.no===no)o.cancelled=true;});
+    S.orders.forEach(function(o){if(o.no===no&&!o.cancelled){o.cancelled=true;qOrder(o);}});
     save();render();toast('#'+p3(no)+' を取り消しました');
   }else if(k.indexOf('expdel:')===0){
-    var eno=Number(k.split(':')[1]);
-    S.expenses.forEach(function(e){if(e.no===eno)e.cancelled=true;});
-    save();render();toast('経費 No.'+eno+' を削除しました');
+    cancelExpense(k.slice(7));
+    save();render();toast('経費を削除しました');
   }else if(k==='doneCancel'){
-    if(ui.done){ui.done.cancelled=true;toast('#'+p3(ui.done.no)+' を取り消しました');}
+    if(ui.done){ui.done.cancelled=true;qOrder(ui.done);toast('#'+p3(ui.done.no)+' を取り消しました');}
     ui.done=null;save();render();
   }else if(k==='wipe'){
     S.orders=[];S.expenses=[];S.cart={};S.actual='';S.demo=false;ui.csv=false;save();render();toast('全データを消去しました');
@@ -634,6 +649,174 @@ function download(name,text,type,bom){
   }catch(e){return false;}
 }
 
+
+/* ---------- 全レジの共有（任意。共有コードを入れた端末だけ動く） ---------- */
+function parseCode(c){
+  c=String(c||'').trim();var i=c.indexOf('#');
+  if(i<1)return null;
+  var u=c.slice(0,i).trim(),t=c.slice(i+1).trim();
+  if(!/^(https:\/\/|http:\/\/localhost[:\/])/.test(u)||!t)return null;
+  return {url:u,token:t};
+}
+function syncOn(){return !!(S.sync&&parseCode(S.sync.code));}
+function kO(o){return (o.dev||S.device)+'|'+o.no;}
+function kE(e){return (e.dev||S.device)+'|'+e.no;}
+function pendingCount(){return Object.keys(S.sync.outbox).length;}
+function curScope(){return syncOn()?(ui.scope||'all'):'dev';}
+function expScope(){return syncOn()?'all':'dev';}
+function ordersFor(scope){
+  if(scope!=='all'||!syncOn())return S.orders;
+  var seen={},out=S.orders.slice();
+  S.orders.forEach(function(o){seen[kO(o)]=1;});
+  (S.remote.orders||[]).forEach(function(o){if(!seen[kO(o)])out.push(o);});
+  return out;
+}
+function expensesFor(scope){
+  if(scope!=='all'||!syncOn())return S.expenses;
+  var seen={},out=S.expenses.slice();
+  S.expenses.forEach(function(e){seen[kE(e)]=1;});
+  (S.remote.expenses||[]).forEach(function(e){if(!seen[kE(e)])out.push(e);});
+  return out;
+}
+function qOrder(o){
+  if(!syncOn())return;
+  o.dev=o.dev||S.device;
+  S.sync.outbox['o|'+kO(o)]={k:'o',key:kO(o),dev:o.dev,no:o.no,v:++S.sync.seq,
+    sum:(o.method==='cash'?'現金':'PayPay')+' '+yen(o.total)+' '+(o.cancelled?'取消':'有効')+' '+mdTime(o.at),doc:o};
+  save();scheduleFlush();
+}
+function qExp(e){
+  if(!syncOn())return;
+  e.dev=e.dev||S.device;
+  S.sync.outbox['e|'+kE(e)]={k:'e',key:kE(e),dev:e.dev,no:e.no,v:++S.sync.seq,
+    sum:e.date+' '+e.cat+' '+yen(e.amount)+(e.cancelled?' 削除':''),doc:e};
+  save();scheduleFlush();
+}
+function queueAll(){S.orders.forEach(function(o){qOrder(o);});S.expenses.forEach(function(e){qExp(e);});}
+function cancelExpense(key){
+  var found=false;
+  S.expenses.forEach(function(e){if(kE(e)===key&&!e.cancelled){e.cancelled=true;qExp(e);found=true;}});
+  if(found)return;
+  (S.remote.expenses||[]).forEach(function(e){
+    if(kE(e)===key&&!e.cancelled){
+      e.cancelled=true;
+      S.sync.outbox['e|'+key]={k:'e',key:key,dev:e.dev,no:e.no,v:++S.sync.seq,sum:e.date+' '+e.cat+' '+yen(e.amount)+' 削除',doc:e};
+      scheduleFlush();
+    }
+  });
+}
+function errText(err){
+  if(err&&err.name==='AbortError')return '応答がありません';
+  if(err&&err.name==='TypeError')return '通信できません';
+  return String((err&&err.message)||err||'エラー');
+}
+function netCall(url,opt){
+  var ac=new AbortController(),tm=setTimeout(function(){ac.abort();},15000);
+  opt.signal=ac.signal;
+  return fetch(url,opt).then(function(r){clearTimeout(tm);return r.json();}).catch(function(e){clearTimeout(tm);throw e;});
+}
+function post(cfg,payload){
+  return netCall(cfg.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+}
+var flushing=false,flushT=null,retryT=null,lastPull=0;
+function scheduleFlush(){clearTimeout(flushT);flushT=setTimeout(flush,400);}
+function srvErr(r){return r.error==='token'?'合言葉が違います':('サーバーエラー: '+(r.error||''));}
+function flush(){
+  if(!syncOn()||flushing)return Promise.resolve();
+  var cfg=parseCode(S.sync.code),keys=Object.keys(S.sync.outbox);
+  if(!keys.length){return (Date.now()-lastPull>8000)?pull():Promise.resolve();}
+  flushing=true;
+  var items=keys.map(function(k){return S.sync.outbox[k];});
+  var sent=items.map(function(it){return {k:it.k,key:it.key,v:it.v};});
+  var payload={action:'push',token:cfg.token,items:items.map(function(it){return {kind:it.k,key:it.key,dev:it.dev,no:it.no,sum:it.sum,doc:it.doc};})};
+  return post(cfg,payload).then(function(r){
+    flushing=false;
+    if(!r.ok)throw new Error(srvErr(r));
+    sent.forEach(function(s){var k=s.k+'|'+s.key,cur=S.sync.outbox[k];if(cur&&cur.v===s.v)delete S.sync.outbox[k];});
+    S.sync.lastOk=Date.now();S.sync.lastErr='';save();
+    if(pendingCount()>0)return flush();
+    return pull();
+  }).catch(function(err){
+    flushing=false;S.sync.lastErr=errText(err);save();
+    clearTimeout(retryT);retryT=setTimeout(flush,20000);
+    refreshIfSync();
+  });
+}
+function pull(){
+  if(!syncOn())return Promise.resolve();
+  var cfg=parseCode(S.sync.code);lastPull=Date.now();
+  return netCall(cfg.url+(cfg.url.indexOf('?')<0?'?':'&')+'action=pull&token='+encodeURIComponent(cfg.token),{method:'GET'}).then(function(r){
+    if(!r.ok)throw new Error(srvErr(r));
+    S.remote={orders:r.orders||[],expenses:r.expenses||[],at:Date.now()};
+    var cx={};
+    S.remote.expenses.forEach(function(d){if(d.cancelled)cx[kE(d)]=1;});
+    S.expenses.forEach(function(e){if(cx[kE(e)]&&!e.cancelled)e.cancelled=true;});
+    Object.keys(S.sync.outbox).forEach(function(k){
+      var it=S.sync.outbox[k];
+      if(it.k==='e'&&it.doc.cancelled)S.remote.expenses.forEach(function(e){if(kE(e)===it.key)e.cancelled=true;});
+    });
+    S.sync.lastOk=Date.now();S.sync.lastErr='';save();refreshIfSync();
+  }).catch(function(err){S.sync.lastErr=errText(err);save();refreshIfSync();});
+}
+function refreshIfSync(){
+  var a=document.activeElement,tag=a&&a.tagName;
+  if(ui.sheet||ui.done||tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA'){renderSyncChip();return;}
+  if(ui.tab==='stat'||ui.tab==='exp'||ui.tab==='set')render();else renderSyncChip();
+}
+function syncTest(){
+  var raw=$('#synccode')?$('#synccode').value:'';
+  var cfg=parseCode(raw);
+  if(!cfg){toast('共有コードの形式が違います（URL#合言葉）');return;}
+  toast('接続テスト中…');
+  post(cfg,{action:'ping',token:cfg.token}).then(function(r){
+    if(!r.ok){toast(r.error==='token'?'合言葉が違います':'接続できませんでした');return;}
+    S.sync.code=raw.trim();S.sync.lastErr='';
+    queueAll();save();render();scheduleFlush();toast('接続できました。全データを送信します');
+  }).catch(function(){toast('接続できませんでした。URLと通信状況を確認してください');});
+}
+function renderSyncChip(){
+  var el=$('#sync');if(!el)return;
+  if(!syncOn()){el.hidden=true;return;}
+  var n=pendingCount(),cls='chip ok',txt='同期済み',er=S.sync.lastErr;
+  if(er){
+    if(er==='通信できません'||er==='応答がありません'){cls='chip warn';txt='送信待ち '+n+'（通信なし）';}
+    else{cls='chip bad';txt='同期エラー';}
+  }else if(n){cls='chip warn';txt='送信待ち '+n;}
+  else if(!S.sync.lastOk){cls='chip warn';txt='接続待ち';}
+  el.hidden=false;el.className=cls;el.textContent=txt;
+}
+function scopeChips(){
+  if(!syncOn())return '';
+  var sc=curScope();
+  return '<div class="chips"><button class="chipb'+(sc==='all'?' on':'')+'" data-act="scope" data-v="all">全レジ</button>'+
+    '<button class="chipb'+(sc==='dev'?' on':'')+'" data-act="scope" data-v="dev">この端末だけ</button></div>';
+}
+function scopeNote(){
+  if(!syncOn())return '全レジを合わせた損益は、設定の「全レジの共有」を使うか、合算用スプレッドシートで確認します';
+  var s=S.sync,n=pendingCount();
+  var t=curScope()==='all'?'全レジの合計です。':'この端末だけの数字です。';
+  t+=s.lastOk?'最終同期 '+timeStr(s.lastOk)+'。':'まだ同期していません。';
+  if(n)t+=' 未送信 '+n+'件。';
+  if(s.lastErr)t+=' ('+esc(s.lastErr)+')';
+  return t;
+}
+function syncCardHTML(){
+  var s=S.sync,on=syncOn(),n=pendingCount();
+  var st=!on?'未設定（共有しなくても使えます）':(s.lastErr?'エラー: '+esc(s.lastErr):(s.lastOk?'同期中':'接続待ち'));
+  return '<section class="card"><h2>全レジの共有（任意）</h2>'+
+    '<label for="synccode">共有コード（URL＋「#」＋合言葉）<input type="text" id="synccode" value="'+esc(s.code)+'" autocomplete="off" autocapitalize="off" spellcheck="false"></label>'+
+    '<div class="two"><button class="btn small" data-act="sync-test">接続テスト</button><button class="btn small" data-act="sync-resend">全データを送り直す</button></div>'+
+    '<div class="close-box"><div class="crow"><span>状態</span><b>'+st+'</b></div>'+
+    '<div class="crow"><span>未送信</span><b>'+n+'件</b></div>'+
+    '<div class="crow"><span>最終同期</span><b>'+(s.lastOk?timeStr(s.lastOk):'―')+'</b></div></div>'+
+    (on?'<label for="linkdev">他の端末用の設定リンクを作る（その端末のレジ名）<input type="text" id="linkdev" placeholder="例：レジ4" autocomplete="off"></label>'+
+      '<button class="btn small" data-act="sync-link">設定リンクを作る</button>'+
+      (ui.link?'<textarea id="linktext" readonly aria-label="設定リンク">'+esc(ui.link)+'</textarea><button class="btn small" data-act="link-copy">コピー</button>'+
+        '<p class="note">このリンクは、その端末のスマホだけに送ってください（グループには流さない）。更新済みのアプリで開くだけで、共有コードとレジ名が自動で入ります。</p>':''):'')+
+    (on?'<button class="btn small" data-act="sync-off">共有をやめる</button>':'')+
+    '<p class="note">各端末のレジ名は、必ず別の名前にしてください。同じ名前だと、注文が上書きされます。共有コードは、他の人に見せないでください。</p></section>';
+}
+
 document.addEventListener('click',function(e){
   var t=e.target.closest('[data-act]');
   if(!t)return;
@@ -644,7 +827,7 @@ document.addEventListener('click',function(e){
     return;
   }
   var hadArmed=ui.armed!==null;ui.armed=null;
-  if(a==='tab'){ui.tab=v;ui.csv=false;render();}
+  if(a==='tab'){ui.tab=v;ui.csv=false;render();if((v==='stat'||v==='exp')&&syncOn()){if(pendingCount()>0)flush();else pull();}}
   else if(a==='add'){S.cart[id]=cartQty(id)+1;buzz();save();render();}
   else if(a==='sub'){if(cartQty(id)>0)S.cart[id]=cartQty(id)-1;save();render();}
   else if(a==='clear'){S.cart={};save();render();}
@@ -670,9 +853,24 @@ document.addEventListener('click',function(e){
     var memo=$('#e-memo').value.trim(),payer=$('#e-payer').value.trim();
     ui.exp={date:date,cat:cat,payer:payer};
     if(amt<=0){toast('金額を入力してください');return;}
-    S.expenses.push({no:nextExpNo(),at:Date.now(),date:date,cat:cat,amount:amt,memo:memo,payer:payer,cancelled:false,dev:S.device});
+    var ne={no:nextExpNo(),at:Date.now(),date:date,cat:cat,amount:amt,memo:memo,payer:payer,cancelled:false,dev:S.device};
+    S.expenses.push(ne);qExp(ne);
     save();render();toast('経費を追加しました（'+yen(amt)+'）');
   }
+  else if(a==='scope'){ui.scope=v;render();}
+  else if(a==='sync-test'){syncTest();}
+  else if(a==='sync-link'){
+    var dvn=($('#linkdev')?$('#linkdev').value:'').trim();
+    ui.link=location.origin+location.pathname+'#sync='+encodeURIComponent(S.sync.code)+(dvn?'&dev='+encodeURIComponent(dvn):'');
+    render();
+  }
+  else if(a==='link-copy'){
+    var lt=$('#linktext'),okl=false;
+    try{lt.focus();lt.select();okl=document.execCommand('copy');}catch(err){}
+    toast(okl?'コピーしました':'選択しました。長押ししてコピーしてください');
+  }
+  else if(a==='sync-resend'){if(syncOn()){queueAll();toast('全データを送信します');}else toast('先に接続テストをしてください');}
+  else if(a==='sync-off'){S.sync.code='';S.sync.lastErr='';S.remote={orders:[],expenses:[],at:0};save();render();toast('共有をやめました');}
   else if(a==='csv'){ui.csv=(ui.csv===v)?false:v;render();}
   else if(a==='dl'){
     var rows=v==='sales'?salesRows():expRows();
@@ -699,7 +897,7 @@ document.addEventListener('change',function(e){
       try{
         var d=JSON.parse(rd.result);
         if(!d||!Array.isArray(d.products)||!Array.isArray(d.orders))throw new Error('bad');
-        S=d;normalize();save();render();toast('バックアップを読み込みました');
+        var keepSync=S.sync;S=d;normalize();if(!S.sync.code&&keepSync)S.sync.code=keepSync.code||'';save();render();toast('バックアップを読み込みました');
       }catch(err){toast('読み込めませんでした。バックアップのファイルを確認してください');}
     };
     rd.readAsText(file);return;
@@ -726,9 +924,31 @@ document.addEventListener('input',function(e){
   }
 });
 
+/* 設定リンク（…/#sync=共有コード&dev=レジ名）で開かれたら、共有設定を取り込んでアドレスから消す */
+(function applyLink(){
+  try{
+    var h=location.hash;
+    if(!h||h.indexOf('sync=')<0)return;
+    var q={};
+    h.slice(1).split('&').forEach(function(kv){var i=kv.indexOf('=');if(i>0)q[kv.slice(0,i)]=decodeURIComponent(kv.slice(i+1));});
+    var cfg=parseCode(q.sync);
+    if(cfg){
+      S.sync.code=String(q.sync).trim();S.sync.lastErr='';
+      if(q.dev&&q.dev.trim())S.device=q.dev.trim();
+      save();queueAll();scheduleFlush();
+      toast('共有設定を入れました（レジ名: '+S.device+'）');
+    }else toast('設定リンクが正しくありません');
+    history.replaceState(null,'',location.pathname+location.search);
+  }catch(e){}
+})();
+
 render();
 
 /* ---- 端末まわり: 保存の永続化・画面を消さない・オフライン対応 ---- */
+setInterval(function(){if(syncOn())flush();},30000);
+window.addEventListener('online',function(){if(syncOn())flush();});
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&syncOn())flush();});
+if(syncOn())flush();
 try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(function(){});}catch(e){}
 function lockScreen(){
   try{
