@@ -1,0 +1,17 @@
+{
+  "name": "まんどぅレジ",
+  "short_name": "まんどぅレジ",
+  "description": "学園祭の模擬店向け会計アプリ（現金・PayPay）",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#e9efed",
+  "theme_color": "#0e6b61",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
